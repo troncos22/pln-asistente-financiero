@@ -1,0 +1,166 @@
+diff -ruN -x __pycache__ -x vendor v0_cruda/app/asistente.py ../app/asistente.py
+--- v0_cruda/app/asistente.py	2026-11-24 08:56:54.043059458 -0300
++++ ../app/asistente.py	2026-11-24 09:02:04.578968795 -0300
+@@ -105,7 +105,7 @@
+ 
+         intencion, entidades = interp["intencion"], dict(interp["entidades"])
+         if intencion in ("registrar_gasto", "registrar_ingreso"):
+-            entidades["descripcion"] = m.texto[:120]
++            entidades.setdefault("descripcion", m.texto[:120])  # en un slot se conserva el mensaje original
+         res = handlers.ejecutar(self.con, intencion, entidades, hoy, sesion)
+         if res.pendiente:
+             sesion["pendiente"] = res.pendiente
+@@ -116,7 +116,7 @@
+         elif self.config.respuesta_modo == "llm" and not res.pendiente:
+             texto, redaccion = self._redactar(res, m.texto)
+ 
+-        entidades.pop("descripcion", None)
++        entidades = {k: v for k, v in entidades.items() if k != "descripcion"}  # sin tocar el slot pendiente
+         salida.update(respuesta=masking.enmascarar_texto(texto), intencion=intencion, entidades=entidades,
+                       fuente_nlu=interp["fuente"], grafico=res.grafico, hechos=res.hechos, redaccion=redaccion,
+                       pendiente=(res.pendiente or {}).get("falta"), accion=res.accion)
+diff -ruN -x __pycache__ -x vendor v0_cruda/app/handlers.py ../app/handlers.py
+--- v0_cruda/app/handlers.py	2026-11-24 08:56:54.043059458 -0300
++++ ../app/handlers.py	2026-11-24 09:00:44.283264289 -0300
+@@ -64,6 +64,11 @@
+         ".", ",").replace("X", ".")
+ 
+ 
++def porcentaje(x: float) -> str:
++    """Porcentaje con un decimal y coma decimal: 109.3 -> '109,3'."""
++    return f"{x:.1f}".replace(".", ",")
++
++
+ def fecha_txt(iso: str) -> str:
+     d = date.fromisoformat(iso)
+     return f"{d.day} de {MESES_TXT[d.month - 1]} de {d.year}"
+@@ -210,12 +215,12 @@
+                                         "pct": round(pct, 1)}
+         lineas.append(f"• {ticker}: {num(p['cantidad'])} acciones, costo promedio {clp(p['costo_promedio'])}, "
+                       f"último precio {clp(precio)} → valor {clp(valor)} ({'+' if ganancia >= 0 else ''}"
+-                      f"{num(round(pct, 1))}%, {clp(ganancia)})")
++                      f"{porcentaje(pct)}%, {clp(ganancia)})")
+     total_g = total_valor - total_costo
+     total_pct = total_g / total_costo * 100 if total_costo else 0
+     hechos.update(total_valor=round(total_valor), total_ganancia=round(total_g), total_pct=round(total_pct, 1))
+     texto = ("Tu portafolio:\n" + "\n".join(lineas) + f"\nValor total {clp(total_valor)}; resultado no realizado "
+-             f"{clp(total_g)} ({num(round(total_pct, 1))}%).")
++             f"{clp(total_g)} ({porcentaje(total_pct)}%).")
+     if any(charts._es_demo(con, t) for t in pos):
+         texto += " (Precios simulados de ejemplo.)"
+     return Resultado(texto, hechos)
+@@ -296,7 +301,7 @@
+         if len(s) >= 2:
+             var = (s[-1][1] / s[0][1] - 1) * 100
+             hechos["variaciones"][t] = round(var, 1)
+-            partes.append(f"{t} {'+' if var >= 0 else ''}{num(round(var, 1))}%")
++            partes.append(f"{t} {'+' if var >= 0 else ''}{porcentaje(var)}%")
+     texto = f"Variación {_periodo_txt(desde, hasta)}: " + ", ".join(partes) + "."
+     if faltan:
+         texto += f" No tengo precios de {', '.join(faltan)} (disponibles: {', '.join(disponibles)})."
+@@ -322,7 +327,7 @@
+     hechos = {"desde": desde.isoformat(), "hasta": hasta.isoformat(), "total": total, "mayor": mayor,
+               "monto_mayor": monto_mayor, "pct": round(pct, 1)}
+     return Resultado(f"{_periodo_txt(desde, hasta).capitalize()} gastaste {clp(total)}. La categoría principal fue "
+-                     f"«{mayor}» con {clp(monto_mayor)} ({num(round(pct, 1))}%).", hechos, g)
++                     f"«{mayor}» con {clp(monto_mayor)} ({porcentaje(pct)}%).", hechos, g)
+ 
+ 
+ # ---------------------------------------------------------------- consejo (P7)
+diff -ruN -x __pycache__ -x vendor v0_cruda/app/static/app.js ../app/static/app.js
+--- v0_cruda/app/static/app.js	2026-11-24 08:56:54.043059458 -0300
++++ ../app/static/app.js	2026-11-24 09:01:44.058176677 -0300
+@@ -57,7 +57,7 @@
+   }));
+   const formato = (v) => (enCLP ? clp(v) : Number(v).toLocaleString("es-CL"));
+   const ejes = dona ? {} : {
+-    x: { ticks: { color: css("--texto-suave"), maxTicksLimit: 12 }, grid: { display: false } },
++    x: { ticks: { color: css("--texto-suave"), maxTicksLimit: window.innerWidth < 600 ? 5 : 12, maxRotation: 0 }, grid: { display: false } },
+     y: { ticks: { color: css("--texto-suave"), callback: formato }, grid: { color: css("--borde") } },
+   };
+   return {
+@@ -65,6 +65,7 @@
+     data: { labels: spec.etiquetas, datasets },
+     options: {
+       responsive: true,
++      maintainAspectRatio: false,
+       interaction: { mode: dona ? "nearest" : "index", intersect: false },
+       plugins: {
+         title: { display: true, text: spec.titulo, color: css("--texto"), font: { size: 14, weight: "600" } },
+@@ -82,10 +83,12 @@
+     return;
+   }
+   const caja = el("div", "grafico");
++  const marco = el("div", "lienzo");
+   const lienzo = el("canvas");
+   lienzo.setAttribute("role", "img");
+   lienzo.setAttribute("aria-label", spec.titulo);
+-  caja.append(lienzo);
++  marco.append(lienzo);
++  caja.append(marco);
+   if (spec.nota) caja.append(el("p", "nota", spec.nota));
+   contenedor.append(caja);
+   new Chart(lienzo, configGrafico(spec));
+@@ -128,7 +131,7 @@
+ async function enviar(texto) {
+   texto = texto.trim();
+   if (!texto) return;
+-  agregarMensaje("usuario", texto);
++  const propio = agregarMensaje("usuario", texto);
+   $("#texto").value = "";
+   $("#enviar").disabled = true;
+   const espera = agregarMensaje("asistente", "Pensando…");
+@@ -140,6 +143,8 @@
+       body: JSON.stringify({ sesion_id: sesionId, mensaje: texto }),
+     });
+     espera.remove();
++    // RF-18: tampoco en pantalla queda el dato sensible que se escribió
++    propio.querySelector(".burbuja").textContent = r.mensaje_enmascarado;
+     renderRespuesta(r);
+     refrescarPanel();
+   } catch (e) {
+diff -ruN -x __pycache__ -x vendor v0_cruda/app/static/styles.css ../app/static/styles.css
+--- v0_cruda/app/static/styles.css	2026-11-24 08:56:54.043059458 -0300
++++ ../app/static/styles.css	2026-11-24 09:01:44.058176677 -0300
+@@ -89,13 +89,14 @@
+ .etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
+ .etiqueta { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--aviso-fondo); color: var(--aviso); }
+ .grafico { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 10px; width: min(640px, 100%); }
++.grafico .lienzo { position: relative; height: 300px; }
+ .grafico .nota { margin: 6px 0 0; }
+ details.detalle { font-size: 12.5px; color: var(--texto-suave); }
+ details.detalle summary { cursor: pointer; }
+ details.detalle pre { white-space: pre-wrap; background: var(--superficie-2); padding: 8px; border-radius: 8px; max-height: 260px; overflow: auto; }
+ .escribiendo { color: var(--texto-suave); font-style: italic; }
+ 
+-.sugerencias { display: flex; gap: 8px; padding: 0 18px 10px; overflow-x: auto; }
++.sugerencias { display: flex; gap: 8px; padding: 0 18px 10px; overflow-x: auto; scrollbar-width: thin; }
+ .sugerencias button {
+   white-space: nowrap; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
+   border-radius: 999px; padding: 5px 12px; font-size: 13px;
+@@ -147,7 +148,7 @@
+ 
+ @media (max-width: 900px) {
+   body { height: auto; }
+-  .contenido { grid-template-columns: 1fr; padding: 12px 16px; }
++  .contenido { grid-template-columns: minmax(0, 1fr); padding: 12px 16px; }
+   .chat { min-height: 70vh; }
+   .msg { max-width: 94%; }
+   .panel { max-height: none; }
+diff -ruN -x __pycache__ -x vendor v0_cruda/tests/test_asistente.py ../tests/test_asistente.py
+--- v0_cruda/tests/test_asistente.py	2026-11-24 08:56:54.043059458 -0300
++++ ../tests/test_asistente.py	2026-11-24 09:01:54.826604395 -0300
+@@ -21,6 +21,7 @@
+     assert r2["intencion"] == "registrar_gasto"
+     assert r2["entidades"]["monto"] == 8000
+     assert r2["entidades"]["categoria"] == "transporte"
++    assert db.ultimos_movimientos(con, 1)[0]["descripcion"] == "gasté plata en el uber"
+ 
+ 
+ def test_cambio_de_tema_descarta_slot(asistente):
+--- /dev/null	2026-11-20 09:18:12.727908970 -0300
++++ ../pytest.ini	2026-11-24 08:57:04.980873833 -0300
+@@ -0,0 +1,3 @@
++[pytest]
++testpaths = tests
++norecursedirs = versiones .venv
