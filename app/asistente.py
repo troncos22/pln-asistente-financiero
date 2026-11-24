@@ -105,7 +105,7 @@ class Asistente:
 
         intencion, entidades = interp["intencion"], dict(interp["entidades"])
         if intencion in ("registrar_gasto", "registrar_ingreso"):
-            entidades["descripcion"] = m.texto[:120]
+            entidades.setdefault("descripcion", m.texto[:120])  # en un slot se conserva el mensaje original
         res = handlers.ejecutar(self.con, intencion, entidades, hoy, sesion)
         if res.pendiente:
             sesion["pendiente"] = res.pendiente
@@ -116,7 +116,7 @@ class Asistente:
         elif self.config.respuesta_modo == "llm" and not res.pendiente:
             texto, redaccion = self._redactar(res, m.texto)
 
-        entidades.pop("descripcion", None)
+        entidades = {k: v for k, v in entidades.items() if k != "descripcion"}  # sin tocar el slot pendiente
         salida.update(respuesta=masking.enmascarar_texto(texto), intencion=intencion, entidades=entidades,
                       fuente_nlu=interp["fuente"], grafico=res.grafico, hechos=res.hechos, redaccion=redaccion,
                       pendiente=(res.pendiente or {}).get("falta"), accion=res.accion)

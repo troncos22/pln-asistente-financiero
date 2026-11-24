@@ -64,6 +64,11 @@ def num(x: float) -> str:
         ".", ",").replace("X", ".")
 
 
+def porcentaje(x: float) -> str:
+    """Porcentaje con un decimal y coma decimal: 109.3 -> '109,3'."""
+    return f"{x:.1f}".replace(".", ",")
+
+
 def fecha_txt(iso: str) -> str:
     d = date.fromisoformat(iso)
     return f"{d.day} de {MESES_TXT[d.month - 1]} de {d.year}"
@@ -210,12 +215,12 @@ def consultar_portafolio(con, e, hoy, sesion) -> Resultado:
                                         "pct": round(pct, 1)}
         lineas.append(f"• {ticker}: {num(p['cantidad'])} acciones, costo promedio {clp(p['costo_promedio'])}, "
                       f"último precio {clp(precio)} → valor {clp(valor)} ({'+' if ganancia >= 0 else ''}"
-                      f"{num(round(pct, 1))}%, {clp(ganancia)})")
+                      f"{porcentaje(pct)}%, {clp(ganancia)})")
     total_g = total_valor - total_costo
     total_pct = total_g / total_costo * 100 if total_costo else 0
     hechos.update(total_valor=round(total_valor), total_ganancia=round(total_g), total_pct=round(total_pct, 1))
     texto = ("Tu portafolio:\n" + "\n".join(lineas) + f"\nValor total {clp(total_valor)}; resultado no realizado "
-             f"{clp(total_g)} ({num(round(total_pct, 1))}%).")
+             f"{clp(total_g)} ({porcentaje(total_pct)}%).")
     if any(charts._es_demo(con, t) for t in pos):
         texto += " (Precios simulados de ejemplo.)"
     return Resultado(texto, hechos)
@@ -296,7 +301,7 @@ def grafico_comparar_acciones(con, e, hoy, sesion) -> Resultado:
         if len(s) >= 2:
             var = (s[-1][1] / s[0][1] - 1) * 100
             hechos["variaciones"][t] = round(var, 1)
-            partes.append(f"{t} {'+' if var >= 0 else ''}{num(round(var, 1))}%")
+            partes.append(f"{t} {'+' if var >= 0 else ''}{porcentaje(var)}%")
     texto = f"Variación {_periodo_txt(desde, hasta)}: " + ", ".join(partes) + "."
     if faltan:
         texto += f" No tengo precios de {', '.join(faltan)} (disponibles: {', '.join(disponibles)})."
@@ -322,7 +327,7 @@ def grafico_gastos_categoria(con, e, hoy, sesion) -> Resultado:
     hechos = {"desde": desde.isoformat(), "hasta": hasta.isoformat(), "total": total, "mayor": mayor,
               "monto_mayor": monto_mayor, "pct": round(pct, 1)}
     return Resultado(f"{_periodo_txt(desde, hasta).capitalize()} gastaste {clp(total)}. La categoría principal fue "
-                     f"«{mayor}» con {clp(monto_mayor)} ({num(round(pct, 1))}%).", hechos, g)
+                     f"«{mayor}» con {clp(monto_mayor)} ({porcentaje(pct)}%).", hechos, g)
 
 
 # ---------------------------------------------------------------- consejo (P7)

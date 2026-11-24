@@ -89,13 +89,14 @@ code, pre { font-family: var(--mono); font-size: 12.5px; }
 .etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
 .etiqueta { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--aviso-fondo); color: var(--aviso); }
 .grafico { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 10px; width: min(640px, 100%); }
+.grafico .lienzo { position: relative; height: 300px; }
 .grafico .nota { margin: 6px 0 0; }
 details.detalle { font-size: 12.5px; color: var(--texto-suave); }
 details.detalle summary { cursor: pointer; }
 details.detalle pre { white-space: pre-wrap; background: var(--superficie-2); padding: 8px; border-radius: 8px; max-height: 260px; overflow: auto; }
 .escribiendo { color: var(--texto-suave); font-style: italic; }
 
-.sugerencias { display: flex; gap: 8px; padding: 0 18px 10px; overflow-x: auto; }
+.sugerencias { display: flex; gap: 8px; padding: 0 18px 10px; overflow-x: auto; scrollbar-width: thin; }
 .sugerencias button {
   white-space: nowrap; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
   border-radius: 999px; padding: 5px 12px; font-size: 13px;
@@ -147,7 +148,7 @@ td small { color: var(--texto-suave); }
 
 @media (max-width: 900px) {
   body { height: auto; }
-  .contenido { grid-template-columns: 1fr; padding: 12px 16px; }
+  .contenido { grid-template-columns: minmax(0, 1fr); padding: 12px 16px; }
   .chat { min-height: 70vh; }
   .msg { max-width: 94%; }
   .panel { max-height: none; }

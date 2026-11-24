@@ -57,7 +57,7 @@ function configGrafico(spec) {
   }));
   const formato = (v) => (enCLP ? clp(v) : Number(v).toLocaleString("es-CL"));
   const ejes = dona ? {} : {
-    x: { ticks: { color: css("--texto-suave"), maxTicksLimit: 12 }, grid: { display: false } },
+    x: { ticks: { color: css("--texto-suave"), maxTicksLimit: window.innerWidth < 600 ? 5 : 12, maxRotation: 0 }, grid: { display: false } },
     y: { ticks: { color: css("--texto-suave"), callback: formato }, grid: { color: css("--borde") } },
   };
   return {
@@ -65,6 +65,7 @@ function configGrafico(spec) {
     data: { labels: spec.etiquetas, datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: dona ? "nearest" : "index", intersect: false },
       plugins: {
         title: { display: true, text: spec.titulo, color: css("--texto"), font: { size: 14, weight: "600" } },
@@ -82,10 +83,12 @@ function dibujarGrafico(contenedor, spec) {
     return;
   }
   const caja = el("div", "grafico");
+  const marco = el("div", "lienzo");
   const lienzo = el("canvas");
   lienzo.setAttribute("role", "img");
   lienzo.setAttribute("aria-label", spec.titulo);
-  caja.append(lienzo);
+  marco.append(lienzo);
+  caja.append(marco);
   if (spec.nota) caja.append(el("p", "nota", spec.nota));
   contenedor.append(caja);
   new Chart(lienzo, configGrafico(spec));
@@ -128,7 +131,7 @@ function renderRespuesta(r) {
 async function enviar(texto) {
   texto = texto.trim();
   if (!texto) return;
-  agregarMensaje("usuario", texto);
+  const propio = agregarMensaje("usuario", texto);
   $("#texto").value = "";
   $("#enviar").disabled = true;
   const espera = agregarMensaje("asistente", "Pensando…");
@@ -140,6 +143,8 @@ async function enviar(texto) {
       body: JSON.stringify({ sesion_id: sesionId, mensaje: texto }),
     });
     espera.remove();
+    // RF-18: tampoco en pantalla queda el dato sensible que se escribió
+    propio.querySelector(".burbuja").textContent = r.mensaje_enmascarado;
     renderRespuesta(r);
     refrescarPanel();
   } catch (e) {

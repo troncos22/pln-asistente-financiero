@@ -21,6 +21,7 @@ def test_ca02_pide_monto_faltante(asistente, con):
     assert r2["intencion"] == "registrar_gasto"
     assert r2["entidades"]["monto"] == 8000
     assert r2["entidades"]["categoria"] == "transporte"
+    assert db.ultimos_movimientos(con, 1)[0]["descripcion"] == "gasté plata en el uber"
 
 
 def test_cambio_de_tema_descarta_slot(asistente):
