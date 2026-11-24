@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Asistente financiero</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/vendor/chart.umd.js"></script>
+</head>
+<body>
+  <header class="barra">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">$</span>
+      <div>
+        <h1>Asistente financiero</h1>
+        <p class="sub">Lang-Chi · corre en tu computador</p>
+      </div>
+    </div>
+    <div class="estado">
+      <span id="chip-llm" class="chip">LLM…</span>
+      <span id="chip-modo" class="chip"></span>
+      <label class="interruptor" title="Oculta los montos del panel">
+        <input type="checkbox" id="privado"> Modo privado
+      </label>
+    </div>
+  </header>
+
+  <main class="contenido">
+    <section class="chat" aria-label="Conversación">
+      <div id="mensajes" class="mensajes" aria-live="polite"></div>
+      <div class="sugerencias" id="sugerencias">
+        <button>¿Cuánta plata tengo?</button>
+        <button>Gráfico de ingresos vs gastos de los últimos 6 meses</button>
+        <button>Compara SQM-B y FALABELLA este año</button>
+        <button>¿En qué se me va la plata este mes?</button>
+        <button>Muéstrame mi portafolio</button>
+        <button>¿Cómo ha evolucionado mi patrimonio?</button>
+      </div>
+      <form id="formulario" class="entrada" autocomplete="off">
+        <textarea id="texto" rows="1" placeholder="Ej: gasté 25 lucas en el súper ayer" maxlength="2000"
+                  aria-label="Mensaje"></textarea>
+        <button type="submit" id="enviar">Enviar</button>
+      </form>
+    </section>
+
+    <aside class="panel" aria-label="Resumen">
+      <div class="kpis">
+        <div class="kpi"><span>Disponible</span><strong class="monto" id="k-caja">—</strong></div>
+        <div class="kpi"><span>Patrimonio</span><strong class="monto" id="k-patrimonio">—</strong></div>
+        <div class="kpi"><span>Ingresos del mes</span><strong class="monto positivo" id="k-ingresos">—</strong></div>
+        <div class="kpi"><span>Gastos del mes</span><strong class="monto negativo" id="k-gastos">—</strong></div>
+      </div>
+
+      <nav class="pestanas" role="tablist">
+        <button role="tab" data-tab="movimientos" class="activa">Movimientos</button>
+        <button role="tab" data-tab="portafolio">Portafolio</button>
+        <button role="tab" data-tab="importar">Importar</button>
+        <button role="tab" data-tab="auditoria">Auditoría</button>
+      </nav>
+
+      <div class="vista activa" id="v-movimientos">
+        <table><thead><tr><th>Fecha</th><th>Detalle</th><th class="der">Monto</th></tr></thead>
+          <tbody id="t-movimientos"></tbody></table>
+      </div>
+      <div class="vista" id="v-portafolio">
+        <table><thead><tr><th>Acción</th><th class="der">Cant.</th><th class="der">Valor</th><th class="der">Resultado</th></tr></thead>
+          <tbody id="t-portafolio"></tbody></table>
+        <p class="nota">Precios de ejemplo simulados salvo que importes los tuyos.</p>
+      </div>
+      <div class="vista" id="v-importar">
+        <form class="importar" data-url="/api/importar/movimientos">
+          <h3>Cartola de movimientos (CSV)</h3>
+          <p class="nota">Columnas: <code>fecha,tipo,monto,categoria,descripcion</code> — tipo = ingreso o gasto.</p>
+          <input type="file" accept=".csv,text/csv" required>
+          <button type="submit">Importar movimientos</button>
+        </form>
+        <form class="importar" data-url="/api/importar/precios">
+          <h3>Precios de acciones (CSV)</h3>
+          <p class="nota">Columnas: <code>fecha,ticker,precio</code></p>
+          <input type="file" accept=".csv,text/csv" required>
+          <button type="submit">Importar precios</button>
+        </form>
+        <pre id="r-importar" class="resultado"></pre>
+      </div>
+      <div class="vista" id="v-auditoria">
+        <p class="nota">Bitácora local de cada turno, ya enmascarada.</p>
+        <ul id="l-auditoria" class="auditoria"></ul>
+      </div>
+    </aside>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
