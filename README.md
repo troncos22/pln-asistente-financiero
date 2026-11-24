@@ -99,7 +99,7 @@ mensaje ─► enmascarado ─► detector de inyección ─► NLU (LLM / regla
 .venv/bin/python -m eval.evaluar --modo hibrido # con qwen3:4b (~20 min en CPU)
 ```
 
-La evaluación usa **84 conversaciones anotadas** (95 turnos) en
+La evaluación usa **84 conversaciones anotadas** (93 turnos) en
 [`eval/conversaciones.jsonl`](eval/conversaciones.jsonl) y mide: exactitud y F1 macro de intención,
 precisión/recall/F1 de entidades, % de respuestas con cifras inventadas, TPR/FPR de inyección y % de
 fugas de datos sensibles (en respuesta, mensaje al LLM, base y auditoría). Los reportes quedan en

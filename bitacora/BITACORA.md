@@ -72,7 +72,7 @@ Orden de [`tasks.md`](../specs/001-asistente-financiero/tasks.md):
 | T23 | `app/asistente.py` | pipeline del turno, *slots*, redacción opcional verificada |
 | T30–T32 | `app/main.py`, `app/static/` | API e interfaz; Chart.js 4.4.1 servido localmente (`npm pack chart.js@4.4.1`, sha256 `74401d73…fd8f3`) |
 | T40 | `tests/` | 99 pruebas (enmascarado, inyección, reglas, criterios de aceptación, API) |
-| T41–T42 | `eval/` | 84 conversaciones anotadas (95 turnos) y evaluador con las 5 métricas |
+| T41–T42 | `eval/` | 84 conversaciones anotadas (93 turnos) y evaluador con las 5 métricas |
 
 Antes de congelar v0, en la misma pasada de generación y **sin haber ejecutado nada**, el agente revisó
 su propio código y ajustó: el contexto que usa `masking.enmascarar` entre sustituciones, el manejador de
