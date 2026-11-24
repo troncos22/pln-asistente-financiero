@@ -36,6 +36,27 @@ Adjunto: `Proyecto_NLP_2026-1-1.pdf` (enunciado del curso).
 **Resultado:** repositorio git propio en `PLN/` con la versión cruda como primer commit (etiqueta
 `v0-cruda`), luego las correcciones y luego la documentación (ver BITACORA.md, "Repositorio git").
 
+### P-03 · requisitos de la siguiente versión
+
+> Deten los provcecos que sigan ejecutándose.
+> Para la siguiente versión, debe haber un scraping de los datos de la bolsa chilena y la bolsa gringa para
+> invertir, que sea una pantalla, deben poder registrarce con una cuenta, preferentemente google, duda hay
+> alguna forma de conectarse con las cuentas bancarias para que la actualización de los gastos sea
+> inmediata?, en caso contrario has un módulo para poder escanear/sacar fotos a boletas, en dicho caso
+> utiliza una api para acceder a procesamiento de imagenes, lo mismo que para los llms lo mejor será
+> mantenerlos como api para un futuro, hasta el momenot a menos que indique explicitamente has el cambio
+> para poder usr apis, utiliza los modelos locales, has una base de datos SQL para encriptar y almacenar
+> datos sensibles, de la misma manera que lo hacemos en el proyecto EMA
+
+**Resultado:** se detuvieron la evaluación con el LLM, el servidor de prueba y el contenedor de Ollama. Se
+revisó el cifrado de EMA, la situación de la conexión bancaria en Chile y las fuentes de datos de mercado.
+
+### P-04 · alcance
+
+> no es necesario implementar V1,
+
+**Resultado:** la v1 quedó solo especificada en `specs/002-v1-cuentas-mercados-boletas/` (sin código).
+
 ---
 
 ## 2. Agente → LLM local (pruebas de desarrollo)
@@ -64,10 +85,10 @@ Se enviaron 4 mensajes por `Asistente.procesar` con `NLU_MODO=hibrido` (prompts 
 
 Los dos últimos casos el modo `reglas` los resuelve mal; el LLM los resuelve bien.
 
-### D-03 · evaluación completa
+### D-03 · evaluación completa (interrumpida)
 `python -m eval.evaluar --modo hibrido` y `--modo llm`: un prompt por turno de cada una de las 84
 conversaciones de [`eval/conversaciones.jsonl`](../eval/conversaciones.jsonl), con el prompt `nlu-v1`.
-Los prompts y respuestas de cada turno quedan en `eval/resultados/*.json` (campo `detalle`).
+Se detuvo antes de terminar por el prompt P-03; no dejó resultados.
 
 ---
 

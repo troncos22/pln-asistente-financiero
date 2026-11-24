@@ -110,7 +110,7 @@ fugas de datos sensibles (en respuesta, mensaje al LLM, base y auditoría). Los 
 
 ## Versiones
 
-- [`versiones/v0_cruda/`](versiones/v0_cruda/): la primera versión **tal como la generó la IA**,
+- Etiqueta git **`v0-cruda`** (primer commit) y carpeta [`versiones/v0_cruda/`](versiones/v0_cruda/): la primera versión **tal como la generó la IA**,
   congelada antes de ejecutar nada (`SHA256SUMS` incluido). Es la "versión cruda" que pide el enunciado.
 - El código en `app/` es la versión actual. Cada diferencia con v0 está explicada en
-  [`bitacora/BITACORA.md`](bitacora/BITACORA.md).
+  [`bitacora/BITACORA.md`](bitacora/BITACORA.md) y se ve con `git diff v0-cruda -- app tests`.

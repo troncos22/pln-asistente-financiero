@@ -146,16 +146,54 @@ pensada para que se pueda revisar qué hizo la IA y qué se cambió después:
 | Commit | Contenido |
 |---|---|
 | `v0 cruda: …` (etiqueta **`v0-cruda`**) | exactamente los archivos de `versiones/v0_cruda/` en sus rutas reales + `.gitignore` + Chart.js |
-| `Correcciones posteriores a v0 …` | las correcciones 1–6 de arriba (`git diff v0-cruda HEAD~… -- app tests`) |
+| `Correcciones posteriores a v0 …` | las correcciones 1–6 de arriba |
 | `Documentación, bitácora y resultados …` | README, bitácora, prompts, `versiones/`, ejemplos CSV y resultados de la evaluación |
 
 `git diff v0-cruda -- app tests` muestra en cualquier momento todo lo que cambió respecto de la versión cruda.
 En el repositorio padre se agregó `PLN/` a `.git/info/exclude` (local, no versionado) para no incrustar
 este repositorio por accidente.
 
-## Evaluación con el LLM (T51)
+Publicado como repositorio **público** en <https://github.com/troncos22/pln-asistente-financiero>
+(rama `main` y etiqueta `v0-cruda`). Antes de subirlo se revisó que no hubiera rutas locales ni
+credenciales en los archivos versionados; los RUT, tarjetas y correos que aparecen son ficticios.
 
-_(se completa al terminar la ejecución)_
+## Evaluación con el LLM (T51) — interrumpida
+
+Se lanzó `python -m eval.evaluar --modo hibrido` y luego `--modo llm` con `qwen3:4b` en CPU (~15 s por
+turno, ~25 min por modo). **Por indicación del equipo (prompt P-03) se detuvieron todos los procesos antes
+de que terminara el modo híbrido**, así que no hay métricas del LLM: solo las de `reglas`. También se
+detuvieron el servidor de prueba y el contenedor `pln-ollama` (se vuelve a levantar con
+`docker start pln-ollama`). Para obtenerlas:
+
+```bash
+docker start pln-ollama
+.venv/bin/python -m eval.evaluar --modo hibrido   # ~25 min
+.venv/bin/python -m eval.evaluar --modo llm       # ~25 min
+```
+
+## Especificación de la v1 (prompts P-03 y P-04)
+
+El equipo pidió para la siguiente versión: *scraping* de la bolsa chilena y de EE. UU. en una pantalla,
+cuentas de usuario (de preferencia Google), escaneo de boletas con procesamiento de imágenes, modelos
+detrás de una API (locales por defecto) y una base SQL cifrada como en el proyecto EMA; y preguntó si se
+puede conectar directo con los bancos. Luego indicó que **no es necesario implementar la v1**, así que se
+dejó solo especificada (SDD) en [`specs/002-v1-cuentas-mercados-boletas/`](../specs/002-v1-cuentas-mercados-boletas/):
+`spec.md` (RF-29…RF-46, CA-09…CA-14), `plan.md` y `tasks.md`. No se escribió código.
+
+Investigación hecha para la especificación:
+
+- **EMA** (`GLASMED/glasmed_app_backend/src/domain/cifrado` y el README de `glasmed-ema-poc`): solo se leyó
+  código y documentación de cifrado, ningún dato. Esquema: AES-256-GCM por campo con sobre versionado y
+  AAD que ata tenant, tabla y columna; DEK y llave HMAC por tenant envueltas por una KEK en OpenBao Transit;
+  índices ciegos HMAC; columnas `*_cifrado` con catálogo probado; PostgreSQL con RLS forzado y `SET LOCAL`.
+  EMA también modela la integración bancaria con proveedores (`tupana`, `tupana_simulado`).
+- **Bancos:** existen agregadores con consentimiento (Fintoc, Floid, Tupana, Clay) que requieren contrato;
+  el Sistema de Finanzas Abiertas de la Ley Fintec (NCG 514 modificada por la NCG 569 de junio de 2026)
+  entra en operación según la CMF en julio de 2027 (hay un documento que dice 2028). Conclusión: para v1,
+  boletas + un `BancoPort` simulado.
+- **Mercados:** el endpoint de gráficos de Yahoo respondió HTTP 429 sin *cookie/crumb*; el sitio de la Bolsa
+  de Santiago es una SPA ("SANTIAGOX") sin `robots.txt` propio. Queda como pregunta abierta elegir una
+  fuente cuyos términos permitan el uso.
 
 ## Pendientes y limitaciones conocidas
 
@@ -166,6 +204,5 @@ _(se completa al terminar la ejecución)_
 - Los precios de acciones son simulados; para datos reales hay que importarlos por CSV.
 - En CPU cada mensaje con LLM tarda ~15 s; el modo `reglas` responde en milisegundos.
 - No hay autenticación: la app asume un solo usuario en su propio computador (escucha solo en 127.0.0.1).
-- El repositorio todavía no está publicado en GitHub (falta decidir nombre y visibilidad).
 - Los commits usan la identidad que git deduce de la máquina (`jorge moreno <troncos1@jorgex1.entelchile.net>`),
   igual que los commits anteriores del repositorio de tareas.

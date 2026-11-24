@@ -38,7 +38,7 @@ Deriva de [`plan.md`](plan.md). Estado: `[ ]` pendiente, `[x]` hecha. `[P]` = pu
 
 ## Fase 5 — Verificación y documentación
 - [x] T50 Ejecutar pytest y corregir (cada corrección en la bitácora)
-- [ ] T51 Ejecutar evaluación en modo `reglas` e `hibrido`
+- [ ] T51 Ejecutar evaluación en modo `reglas` e `hibrido` (`reglas` hecha; `hibrido` y `llm` interrumpidas)
 - [x] T52 Probar la app en el navegador (CA-01…CA-06)
 - [x] T53 README con instalación y uso
-- [ ] T54 Cerrar bitácora y prompts
+- [x] T54 Cerrar bitácora y prompts
